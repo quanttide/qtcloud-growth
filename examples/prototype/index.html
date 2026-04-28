@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>量潮增长云 · 原型</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: #1a202c;
+        }
+
+        /* ─── Top Bar ─── */
+        .topbar {
+            background: #1a1a2e;
+            color: white;
+            padding: 0 24px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+        .topbar .logo { font-weight: 700; font-size: 15px; letter-spacing: 0.5px; }
+        .topbar .logo span { color: #63b3ed; }
+        .topbar .nav { display: flex; gap: 4px; margin-left: 24px; }
+        .topbar .nav button {
+            background: none; border: none; color: #a0aec0;
+            padding: 6px 14px; font-size: 13px; cursor: pointer;
+            border-radius: 4px; transition: all 0.2s;
+        }
+        .topbar .nav button:hover { color: white; background: rgba(255,255,255,0.08); }
+        .topbar .nav button.active { color: white; background: rgba(255,255,255,0.12); }
+        .topbar .session-info {
+            margin-left: auto;
+            font-size: 12px;
+            color: #718096;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .session-info .dot {
+            width: 6px; height: 6px; border-radius: 50%;
+        }
+        .session-info .dot.green { background: #48bb78; }
+
+        /* ─── Main Layout ─── */
+        .main {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        .column {
+            display: flex;
+            flex-direction: column;
+        }
+        .col-left {
+            flex: 1;
+            min-width: 0;
+            border-right: 1px solid #e2e8f0;
+            background: white;
+        }
+        .col-right {
+            width: 460px;
+            min-width: 460px;
+            background: #fafafa;
+        }
+
+        /* ─── Left Column: Explorer ─── */
+        .explorer-header {
+            padding: 12px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 12px;
+            color: #718096;
+            letter-spacing: 0.5px;
+            background: #fafafa;
+            flex-shrink: 0;
+        }
+        .explorer-header strong { color: #2d3748; }
+
+        .chat {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .chat::-webkit-scrollbar { width: 4px; }
+        .chat::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 2px; }
+
+        .msg {
+            max-width: 85%;
+            padding: 10px 14px;
+            font-size: 14px;
+            line-height: 1.65;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .msg.explorer {
+            align-self: flex-start;
+            background: #ebf8ff;
+            color: #2a4365;
+            border-radius: 12px 12px 12px 4px;
+        }
+        .msg.explorer .byline {
+            font-size: 11px;
+            color: #63b3ed;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+        .msg.you {
+            align-self: flex-end;
+            background: #2d3748;
+            color: white;
+            border-radius: 12px 12px 4px 12px;
+        }
+        .msg.you .byline {
+            font-size: 11px;
+            color: #a0aec0;
+            margin-bottom: 4px;
+        }
+
+        .input-row {
+            padding: 12px 20px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+            background: white;
+        }
+        .input-row input {
+            flex: 1;
+            padding: 9px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border 0.2s;
+        }
+        .input-row input:focus { border-color: #63b3ed; }
+        .input-row button {
+            padding: 9px 20px;
+            background: #3182ce;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .input-row button:hover { background: #2b6cb0; }
+        .input-row button:disabled { background: #cbd5e0; cursor: default; }
+
+        /* ─── Right Column: Observer ─── */
+        .observer-panel {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        .observer-panel::-webkit-scrollbar { width: 4px; }
+        .observer-panel::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 2px; }
+
+        .observer-title {
+            font-size: 11px;
+            letter-spacing: 1px;
+            color: #718096;
+            margin-bottom: 12px;
+        }
+        .observer-title span { color: #48bb78; }
+
+        .card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+        .card:last-child { margin-bottom: 0; }
+
+        .card .card-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #a0aec0;
+            margin-bottom: 8px;
+        }
+        .card h4 {
+            font-size: 13px;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        /* Category map */
+        .cat-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 0;
+            font-size: 13px;
+        }
+        .cat-row .obj {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .cat-row .obj .disc {
+            width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+        }
+        .cat-row .obj .label { color: #2d3748; }
+        .cat-row .obj .role {
+            font-size: 10px; color: #a0aec0;
+            background: #edf2f7; padding: 1px 6px; border-radius: 3px;
+        }
+        .cat-row .morphism {
+            color: #a0aec0;
+            font-size: 16px;
+            margin: 0 4px;
+        }
+
+        /* Inference */
+        .inference-box { background: #fffbeb; border-color: #f6e05e; }
+        .inference-box .step {
+            font-size: 13px;
+            padding: 4px 0;
+            color: #744210;
+        }
+        .inference-box .step .arrow { color: #d69e2e; margin: 0 4px; }
+        .inference-box .conclusion {
+            margin-top: 8px;
+            padding: 8px 10px;
+            background: #c6f6d5;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #22543d;
+            font-weight: 600;
+        }
+
+        /* Insight */
+        .insight { background: #ebf8ff; border-color: #63b3ed; }
+        .insight p { font-size: 13px; line-height: 1.6; color: #2a4365; }
+
+        /* ─── Verify Phase (toggle) ─── */
+        .verify-bar {
+            border-top: 1px solid #e2e8f0;
+            background: white;
+            padding: 12px 16px;
+            flex-shrink: 0;
+            display: none;
+        }
+        .verify-bar.show { display: block; }
+        .verify-bar .v-title {
+            font-size: 11px;
+            letter-spacing: 1px;
+            color: #718096;
+            margin-bottom: 8px;
+        }
+        .verify-bar .v-title span { color: #48bb78; }
+
+        .metrics {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .metrics .m {
+            flex: 1;
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 8px;
+            text-align: center;
+        }
+        .metrics .m .val {
+            font-size: 20px;
+            font-weight: 700;
+            color: #2d3748;
+        }
+        .metrics .m .val.up { color: #48bb78; }
+        .metrics .m .lbl {
+            font-size: 10px;
+            color: #718096;
+            margin-top: 2px;
+        }
+
+        .v-log {
+            max-height: 80px;
+            overflow-y: auto;
+            font-size: 11px;
+            color: #a0aec0;
+        }
+        .v-log .r { padding: 2px 0; }
+
+        /* ─── Evolution Banner ─── */
+        .evolve-banner {
+            display: none;
+            padding: 10px 16px;
+            background: #fffbeb;
+            border-top: 1px solid #f6e05e;
+            font-size: 12px;
+            color: #744210;
+            flex-shrink: 0;
+            align-items: center;
+            gap: 8px;
+        }
+        .evolve-banner.show { display: flex; }
+
+        /* ─── Empty States ─── */
+        .empty-observer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 40px;
+            color: #a0aec0;
+        }
+        .empty-observer .icon { font-size: 40px; margin-bottom: 12px; }
+        .empty-observer p { font-size: 13px; line-height: 1.6; max-width: 280px; }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 960px) {
+            .col-right { width: 100%; min-width: 0; }
+            .main { flex-direction: column; }
+        }
+
+        .tag-badge {
+            display: inline-block;
+            font-size: 10px;
+            padding: 1px 8px;
+            border-radius: 10px;
+            background: #edf2f7;
+            color: #4a5568;
+            margin-left: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="logo">量潮增长<span>云</span></div>
+        <div class="nav">
+            <button class="active" onclick="setPhase('design')" id="navDesign">设计阶段</button>
+            <button onclick="setPhase('verify')" id="navVerify">验证阶段</button>
+        </div>
+        <div class="session-info">
+            <span class="dot green"></span>
+            <span id="sessionStatus">对话进行中</span>
+        </div>
+    </div>
+
+    <div class="main">
+        <!-- ─── Left: Explorer ─── -->
+        <div class="column col-left">
+            <div class="explorer-header">
+                <strong>探索者</strong> · 描述你的真实情境，观察者在右侧分析
+            </div>
+            <div class="chat" id="chat"></div>
+            <div class="input-row">
+                <input type="text" id="chatInput" placeholder="描述你的情况..." onkeydown="if(event.key==='Enter') send()">
+                <button id="sendBtn" onclick="send()">发送</button>
+            </div>
+        </div>
+
+        <!-- ─── Right: Observer ─── -->
+        <div class="column col-right">
+            <div class="observer-panel" id="observerPanel">
+                <div class="empty-observer" id="emptyObserver">
+                    <div class="icon">🧠</div>
+                    <p>观察者在等待你的描述。每次对话后，右侧会生成范畴映射和推理结论。</p>
+                </div>
+                <div id="observerContent" style="display:none;">
+                    <div class="observer-title">🧠 观察者 <span>· 范畴分析</span></div>
+                    <div id="observerCards"></div>
+                </div>
+            </div>
+            <div class="verify-bar" id="verifyBar">
+                <div class="v-title">📊 验证 <span>· 持续观测</span></div>
+                <div class="metrics">
+                    <div class="m"><div class="val up" id="m1">3</div><div class="lbl">内容产出</div></div>
+                    <div class="m"><div class="val" id="m2">7</div><div class="lbl">客户互动</div></div>
+                    <div class="m"><div class="val" id="m3">2</div><div class="lbl">咨询转化</div></div>
+                </div>
+                <div class="v-log" id="vLog">
+                    <div class="r">数据流入中...</div>
+                </div>
+            </div>
+            <div class="evolve-banner" id="evolveBanner">
+                🔧 <span id="evolveText"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function(){
+            const chat = document.getElementById('chat');
+            const input = document.getElementById('chatInput');
+            const btn = document.getElementById('sendBtn');
+            const observerContent = document.getElementById('observerContent');
+            const emptyObserver = document.getElementById('emptyObserver');
+            const cards = document.getElementById('observerCards');
+            const verifyBar = document.getElementById('verifyBar');
+            const vLog = document.getElementById('vLog');
+            const evolveBanner = document.getElementById('evolveBanner');
+            const evolveText = document.getElementById('evolveText');
+            const phaseLabel = document.getElementById('sessionStatus');
+
+            const m1 = document.getElementById('m1');
+            const m2 = document.getElementById('m2');
+            const m3 = document.getElementById('m3');
+
+            let currentPhase = 'design';
+            let conversationCount = 0;
+            let evolveIndex = 0;
+
+            const evolveMessages = [
+                '检测到"客户问题"高频出现，自动生成分类模式：问题类型聚类。',
+                '内容产出与咨询转化正相关，新增指标：内容转化率。',
+                '团队学习节奏与客户互动频率存在关联，新增工具：节奏匹配图。'
+            ];
+
+            /* ─── Initial greeting ─── */
+            addExplorerMsg('你好，我是增长探索者。我先不给你建议，而是想先理解你真实的情境。你目前在增长上最困惑的是什么？');
+
+            /* ─── Send ─── */
+            window.send = function() {
+                const text = input.value.trim();
+                if (!text) return;
+                input.value = '';
+                addUserMsg(text);
+                btn.disabled = true;
+                conversationCount++;
+
+                setTimeout(() => {
+                    const response = generateResponse(conversationCount, text);
+                    addExplorerMsg(response.text);
+                    addObserverCard(response.category, response.morphism, response.conclusion);
+                    updateMetrics();
+                    btn.disabled = false;
+                    checkEvolve();
+                }, 600 + Math.random() * 400);
+            };
+
+            function addExplorerMsg(text) {
+                const div = document.createElement('div');
+                div.className = 'msg explorer';
+                div.innerHTML = `<div class="byline">🌊 探索者</div>${text}`;
+                chat.appendChild(div);
+                chat.scrollTop = chat.scrollHeight;
+            }
+
+            function addUserMsg(text) {
+                const div = document.createElement('div');
+                div.className = 'msg you';
+                div.innerHTML = `<div class="byline">👤 你</div>${text}`;
+                chat.appendChild(div);
+                chat.scrollTop = chat.scrollHeight;
+            }
+
+            /* ─── Generate response based on count ─── */
+            function generateResponse(n, userText) {
+                const responses = [
+                    {
+                        text: '那你目前团队每天花时间最多的事情是什么？',
+                        category: { src: '当前困境', tgt: '团队活动' },
+                        morphism: '存在态射 f: 困境 → 活动，表示"团队如何应对"',
+                        conclusion: '观察：团队被问题牵引，尚未形成主动外溢结构。'
+                    },
+                    {
+                        text: '你的客户群体是什么样的人？他们会在什么地方关注到你？',
+                        category: { src: '团队', tgt: '客户触达点' },
+                        morphism: '存在态射 g: 团队 → 触达点，定义"互动渠道"',
+                        conclusion: '已有客户渠道，但未被结构化利用。可将客户互动视为内容外溢的接口。'
+                    },
+                    {
+                        text: '过去的半年里，有没有哪一次分享（哪怕是无意的）让客户主动来找你咨询？',
+                        category: { src: '分享行为', tgt: '客户响应' },
+                        morphism: '存在态射 h: 分享 → 响应，验证"外溢 → 获客"是否成立',
+                        conclusion: '外溢机制已有自然验证。只需结构化和持续化。'
+                    },
+                    {
+                        text: '如果今天开始，把你们内部讨论过的一个话题直接整理成笔记发出去，你觉得最大的阻碍是什么？',
+                        category: { src: '想法', tgt: '输出行为' },
+                        morphism: '存在态射 i: 想法 → 输出，阻碍来自"完成焦虑"',
+                        conclusion: '不需要"研究透彻"再分享。学习过程本身就是最好的内容。'
+                    },
+                    {
+                        text: '我大致理解你的模式了。你不是缺内容，是缺一个"对外输出"的接口。你团队本就在学习，本就在和客户交流——这些已经是增长飞轮的燃料了。',
+                        category: { src: '现有工作', tgt: '增长结果' },
+                        morphism: '存在自然态射: 工作 → 外溢 → 增长，已验证',
+                        conclusion: '元增长策略确定：基于现有学习过程构建外溢接口，让增长自然流淌。'
+                    }
+                ];
+
+                const idx = Math.min(n - 1, responses.length - 1);
+                return responses[idx];
+            }
+
+            function addObserverCard(category, morphism, conclusion) {
+                emptyObserver.style.display = 'none';
+                observerContent.style.display = 'block';
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="card-label">范畴映射 #${conversationCount}</div>
+                    <h4>${category.src} → ${category.tgt}</h4>
+                    <div class="cat-row">
+                        <span class="obj"><span class="disc" style="background:#667eea"></span><span class="label">${category.src}</span><span class="role">源对象</span></span>
+                        <span class="morphism">→</span>
+                        <span class="obj"><span class="disc" style="background:#48bb78"></span><span class="label">${category.tgt}</span><span class="role">目标对象</span></span>
+                    </div>
+                    <div style="margin-top:8px;padding:6px 10px;background:#fffbeb;border-radius:4px;font-size:12px;color:#744210;">
+                        📐 ${morphism}
+                    </div>
+                    <div style="margin-top:6px;padding:8px 10px;background:#c6f6d5;border-radius:4px;font-size:13px;color:#22543d;font-weight:600;">
+                        ✅ ${conclusion}
+                    </div>
+                `;
+                cards.appendChild(card);
+                cards.scrollTop = cards.scrollHeight;
+            }
+
+            function updateMetrics() {
+                const cv = parseInt(m1.textContent) + (Math.random() > 0.5 ? 1 : 0);
+                const ev = parseInt(m2.textContent) + (Math.random() > 0.3 ? 1 : 0);
+                const tv = parseFloat(m3.textContent) + (Math.random() > 0.65 ? 0.5 : 0);
+                m1.textContent = cv;
+                m2.textContent = ev;
+                m3.textContent = tv.toFixed(1);
+
+                const time = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                const r = document.createElement('div');
+                r.className = 'r';
+                r.textContent = `${time} · 对话更新，指标同步变动`;
+                vLog.appendChild(r);
+                vLog.scrollTop = vLog.scrollHeight;
+            }
+
+            function checkEvolve() {
+                if (conversationCount >= 2 && evolveIndex < evolveMessages.length) {
+                    const show = Math.random() > 0.4;
+                    if (show) {
+                        evolveText.textContent = evolveMessages[evolveIndex];
+                        evolveBanner.classList.add('show');
+                        evolveIndex++;
+                        setTimeout(() => evolveBanner.classList.remove('show'), 6000);
+                    }
+                }
+            }
+
+            /* ─── Phase switching ─── */
+            window.setPhase = function(p) {
+                currentPhase = p;
+                document.getElementById('navDesign').className = p === 'design' ? 'active' : '';
+                document.getElementById('navVerify').className = p === 'verify' ? 'active' : '';
+                verifyBar.className = 'verify-bar' + (p === 'verify' ? ' show' : '');
+                phaseLabel.textContent = p === 'design' ? '设计阶段' : '验证阶段';
+
+                if (p === 'verify') {
+                    addExplorerMsg('进入验证阶段。平台不会替你解决问题，但会持续观测你的模式变化。数据会说话。');
+                } else {
+                    addExplorerMsg('回到设计阶段。继续描述你的情境，观察者会持续分析。');
+                }
+            };
+        })();
+    </script>
+</body>
+</html>
